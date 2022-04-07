@@ -60,8 +60,9 @@ def confirm_filename():
     #         w.writerow([fileID_var.get()])
     # else:
     #     opendropdownFileID()
-    
-    filename = d1 + '_' + recordtype + '_' + fileID_var.get()
+    fid = fileID_var.get()
+    fid = fid.replace(' ','_')
+    filename = d1 + '_' + recordtype + '_' + fid
     filename_var.set(filename)
     label_confirm_filename.configure(text = "Confirmed filename: " + filename)
 
@@ -422,7 +423,7 @@ def CameraRECORD():
         button_start_recording.configure(bg = "red")
         print(rec_duration)
         print(filename_var.get())
-        directory = filedir_var.get()
+        directory = filedir_var.get() + '/'
         filename = filename_var.get()
         directory += filename
         t = time.localtime()
@@ -432,9 +433,9 @@ def CameraRECORD():
         bar()
         camera.wait_recording(rec_duration)
         camera.stop_recording()
+        CameraOFF()
         label_recording_status.configure(text = "Recording is complete!")
         button_start_recording.configure(bg = "skyblue1")
-        camera.close()
         t = time.localtime()
         recording_end_time = (time.strftime("%H:%M:%S", t))
         endtimeVar.set(recording_end_time)
@@ -457,9 +458,7 @@ def openNextRecordingWindow():
     nrWindow.geometry("400x160")
     Label(nrWindow, text="Recording is complete!\n Would you like to record another video?", font = font_normal).pack()
     Button(nrWindow, text="Yes", font=font_normal,command=recordAgain).place(x=130,y=60)
-    Button(nrWindow,text="No",font=font_normal,command=closeGUI).place(x=230,y=60)
-
-    
+    Button(nrWindow,text="No",font=font_normal,command=closeGUI).place(x=230,y=60)    
 
 #open preview button
 button_open_preview = Button(root, text = "Open Preview", font = font_bold, bg = "green2", command = CameraON)
