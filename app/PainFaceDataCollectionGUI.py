@@ -5,7 +5,9 @@ from tkinter import filedialog
 import csv
 import tkinter.ttk as ttk
 from datetime import date
+import os.path
 from PIL import Image, ImageTk
+from tkinter import messagebox
 import numpy as np
 import picamera
 import time
@@ -17,7 +19,7 @@ font_normal = ('calibre',11,'normal')
 label_font = ('calibre', 14, 'bold')
 csv_label_font = ('Helvetica', 10, 'bold')
 camera = picamera.PiCamera()
-camera.rotation = 0
+# camera.rotation = 180
 rec_duration = 0
 
 #location and name of video label
@@ -26,7 +28,7 @@ label_location.place(x = 5, y = 15)
 
 #painface logo
 img = Image.open("painface.JPG")
-img = img.resize((200,200))
+img = img.resize((150,150))
 logoimg = ImageTk.PhotoImage(img)
 logo = Label(root, image=logoimg)
 logo.place(x=90,y=570)
@@ -34,6 +36,10 @@ logo.place(x=90,y=570)
 
 #filename command
 filename_var = StringVar()
+fileID_var = StringVar()
+fileid_path = 'fileid.csv'
+
+idlist = []
 def confirm_filename():
     # if (filename.find(".mp4") < 0):
     #     filename += ".mp4"
@@ -48,21 +54,48 @@ def confirm_filename():
         recordtype = "BASE"
     today = date.today()
     d1 = today.strftime("%y%m%d")
-    t1 = time.strftime("%H%M")
-    filename = recordtype + d1 + '_' + t1
+    # if(os.path.exists(fileid_path) == False):
+    #     with open(fileid_path, 'w', newline='') as f:
+    #         w = csv.writer(f, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    #         w.writerow([fileID_var.get()])
+    # else:
+    #     opendropdownFileID()
+    
+    filename = d1 + '_' + recordtype + '_' + fileID_var.get()
     filename_var.set(filename)
     label_confirm_filename.configure(text = "Confirmed filename: " + filename)
 
 # file name widget
-label_filename = Label(root, text = "Enter file name:", font = font_bold)
-entry_filename = Entry(root, textvariable = filename_var, font = font_normal)
+label_filename = Label(root, text = "Enter file ID:", font = font_bold)
+entry_filename = Entry(root, textvariable = fileID_var, font = font_normal)
 button_confirm_filename = Button(root, text = "Confirm", font = font_normal, command = confirm_filename)
 label_confirm_filename = Label(root, text = "", font = font_normal)
 recordtype = "BASE"
+# def opendropdownFileID():
+#     if(chk_filelistvar.get()==1):
+#         entry_filename.configure(state='disabled')
+#         fileID = fileID_var.get()
+#         idlist = []
+#         with open(fileid_path, 'r') as g:
+#             r = csv.reader(g, delimiter=',')
+#             for lines in r:
+#                 idlist = lines[0]
+#         if(fileID not in idlist):
+#             dropdown_fileID = OptionMenu(root, fileID_var, *idlist)
+#             dropdown_fileID.place(x=270,y=20)
+#     else:
+#         dropdown_fileID = OptionMenu(root, fileID_var, 'null')
+#         entry_filename.configure(state='normal')
+#         dropdown_fileID.configure(state='disabled')
+
+# chk_filelistvar = IntVar()
+# check_filenamelist = Checkbutton(root, text = 'Select from previously used IDs', font = font_normal, variable=chk_filelistvar, onvalue=1, offvalue=0, command=opendropdownFileID)
+# check_filenamelist.place(x=20, y=20)
+
 today = date.today()
 d1 = today.strftime("%y%m%d")
 t1 = time.strftime("%H%M")
-filename = recordtype + d1 + '_' + t1
+filename = d1 + '_' + recordtype + '_' + filename_var.get()
 filename_var.set(filename)
 
 filedir_var = StringVar()
@@ -80,7 +113,6 @@ button_file_explorer = Button(root, text = "Select Directory", font = font_norma
 #experimental variables label
 label_experimental = Label(root, text = 'Experimental Variables:', font = label_font)
 label_experimental.place(x=5, y = 220)
-
 
 #pi number function
 def pi_button():
@@ -259,6 +291,7 @@ def confirm_resolution():
     label_confirmed_res = Label(root, text = "Confirmed Resolution: " + res_var.get()).place(x=650, y=70)
     confirmed_res = res_var.get()
     strRes = res_var.get()
+    print(res_var.get())
     res1 = int(strRes[1:strRes.find(',')])
     res2 = int(strRes[strRes.find(',')+2:len(strRes)-1])
     update_framerate_options()
@@ -268,7 +301,7 @@ def confirm_resolution():
 label_resolution = Label(root, text = 'Select Camera Resolution: ', font = font_bold)
 label_resolution.pack()
 res_options = ["(640, 480)", "(1296, 972)", "(1296, 730)", "(1920, 1080)", "(2592, 1944)"]
-res_var.set(res_options[0])
+res_var.set(res_options[3])
 dropdown_resolution = OptionMenu(root, res_var, *res_options)
 dropdown_resolution.pack()
 
@@ -317,7 +350,7 @@ dropdown_framerate = OptionMenu(root, frame_var, *framerate_options)
 
 button_confirm_framerate = Button(root, text = "Confirm", font = font_normal, command = confirm_framerate)
 button_confirm_framerate.pack()
-label_confirm_framerate = Label(root, text = "", font = font_normal)
+label_confirm_framerate = Label(root,text = "", font = font_normal)
 label_confirm_framerate.pack()
 
 
@@ -358,12 +391,17 @@ button_confirm_brightness = Button(root, text='Confirm', command=confirm_brightn
 label_video_preview = Label(root, text = 'Video Preview:', font = label_font)
 label_video_preview.place(x =450, y =400)
 
+#recording start end time
+t= time.localtime()
+starttimeVar = StringVar()
+endtimeVar = StringVar()
 
 # picamera initialization
 def CameraON():
     camera.preview_fullscreen = False
     camera.preview_window = (90, 100, 320, 240)
-    camera.resolution = (640, 480)
+    camera.resolution = (1920, 1080)
+    camera.framerate = 30
     camera.start_preview()
 
 def CameraOFF():
@@ -371,34 +409,38 @@ def CameraOFF():
 
 
 def CameraRECORD():
-    rec_duration = duration_var.get() *60
+    rec_duration = duration_var.get() * 60
     if(filename_var.get() == ""):
         label_recording_status.configure(text = "Enter filename before starting recording!")
     elif(rec_duration == 0):
         label_recording_status.configure(text = "Enter recording duration before starting recording!")
+    elif(filedir_var.get() == ""):
+        label_recording_status.configure(text = "Select file directory before starting recording!")
     else:
         label_recording_status.configure(text = "Recording has begun!")
         label_recording_status.place(x = 720, y= 390)
         button_start_recording.configure(bg = "red")
         print(rec_duration)
         print(filename_var.get())
-        directory = filedir_var.get() + '/'
+        directory = filedir_var.get()
         filename = filename_var.get()
         directory += filename
         t = time.localtime()
-        recording_start_time = (time.strftime("%H:%M:%S", t))
-        starttime = recording_start_time
+        recording_start_time = (time.strftime("%H:%M:%S", t)) 
+        starttimeVar.set(recording_start_time)
         camera.start_recording(f'{directory}.h264')
         bar()
         camera.wait_recording(rec_duration)
         camera.stop_recording()
         label_recording_status.configure(text = "Recording is complete!")
         button_start_recording.configure(bg = "skyblue1")
+        camera.close()
         t = time.localtime()
         recording_end_time = (time.strftime("%H:%M:%S", t))
-        endtime = recording_end_time
+        endtimeVar.set(recording_end_time)
+        if(CSVflagVar.get() == "On"):
+            create_csv()
         openNextRecordingWindow()
-
 
 def openNextRecordingWindow():
     def recordAgain():
@@ -407,7 +449,6 @@ def openNextRecordingWindow():
         label_progressbar_status.configure(text = "0% Complete")
         label_recording_status.configure(text = "")
     def closeGUI():
-        camera.close()
         nrWindow.destroy()
         root.destroy()
 
@@ -419,11 +460,6 @@ def openNextRecordingWindow():
     Button(nrWindow,text="No",font=font_normal,command=closeGUI).place(x=230,y=60)
 
     
-    
-
-#recording start end time
-starttime = time.strftime
-endtime = time.strftime
 
 #open preview button
 button_open_preview = Button(root, text = "Open Preview", font = font_bold, bg = "green2", command = CameraON)
@@ -439,9 +475,7 @@ button_start_recording.place(x = 720, y = 450)
 label_recording_status = Label(root, text = '', font = font_normal)
 label_recording_status.place(x = 660, y = 420)
 
-
 #progress bar
-
 label_progress = Label(root, text = "Recording Progress:", font = font_bold).place(x = 605, y = 530)
 progress = ttk.Progressbar(root, orient = HORIZONTAL, length = 400, mode= 'determinate')
 progress.place(x= 480, y = 550)
@@ -450,57 +484,121 @@ label_progressbar_status = Label(root, text = "0% Complete", font = font_normal)
 label_progressbar_status.place(x=625, y = 575)
 
 def bar():
-    rec_duration = duration_var.get() *60
-    for second in range(int(rec_duration+1)):
-        progresspct = second/rec_duration *100
+    rec_duration = duration_var.get() * 60
+    for second in range(int(rec_duration + 1)):
+        progresspct = second/rec_duration * 100
         progress['value'] = progresspct
         ppct = int(progresspct)
         label_progressbar_status.configure(text = str(ppct) + "% Complete")
         root.update_idletasks()
         time.sleep(1)
 
-
 #csv file
 #check if filename_var is confirmed
 def create_csv():
     directory = filedir_var.get() + '/'
-    filename = filename_var.get()
-    directory += filename
-    with open(directory + '.csv', 'w', newline='') as f:
-        w = csv.writer(f, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    todaydate = date.today()
+    d2 = todaydate.strftime("%y%m%d")
+    csvName = d2 + '_' + 'DATA' 
+    directory += csvName
+    if(os.path.isfile(directory + '.csv') == False):
+        with open(directory + '.csv', 'w', newline='') as f:
+            w = csv.writer(f, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            #TODO: check to make sure these are confirmed
+            resolution = res_var.get()
+            res1 = str(resolution[1:resolution.find(',')])
+            res2 = str(resolution[resolution.find(',')+2:len(resolution)-1])
+            newres = res1 + 'x' + res2
+            rowHeaders = ['Recording Name', 'Brightness', 'Sharpness', 'Resolution', 'Framerate', 'Start Time', 'End Time', 'Pi Number', 'Experiment Type', 'Post-Operation Type', 'Post-Op Info']
+            trialData = [filename_var.get(), slider_brightness.get(), slider_sharpness.get(), newres, frame_var.get(), starttimeVar.get(), endtimeVar.get()]
+            # as an example, i created a boolean flag variable that is true when the pi button is confirmed. 
+            # not sure if there is a better way to do this 
+            if pinumvar.get() == "On":
+                trialData.append(raspinum.get())
 
-        #TODO: check to make sure these are confirmed
-        w.writerow(['FileName', filename_var.get()])
-        w.writerow(['Brightness', slider_brightness.get()])
-        w.writerow(['Sharpness', slider_sharpness.get()])
-        w.writerow(['Resolution', res_var.get()])
-        w.writerow(['Framerate', frame_var.get()])
-        w.writerow(['Recording Start Time', starttime])
-        w.writerow(['Recording End Time', endtime])
+            #recording type variables: i used label['text'] to retrieve text from labels and .get() to retrieve text from entry boxes
+            postOpVars = []
+            postOpData = []
+            baselineVars = []
+            baselineData = []
+            if rec_var.get() == "On":
+                trialData.append(rec.get())
+                if rec.get() == "Post-Operation":
+                    trialData.append(types.get())
+                    for i in range(1, len(dynamic_widgets)):
+                        if i % 2 != 0:
+                            postOpVars.append(dynamic_widgets[i]['text'])
+                            postOpData.append(dynamic_widgets[i+1].get())
+                    for var in postOpVars:
+                        rowHeaders.append(var)
+                    for data in postOpData:
+                        trialData.append(data)
+                elif rec.get() == 'Baseline' or rec.get() == 'Test':
+                    for i in range(len(dynamic_widgets)):
+                        if i%2 == 0:
+                            baselineVars.append(dynamic_widgets[i]['text'])
+                            baselineData.append(dynamic_widgets[i+1].get())
+                            for var in baselineVars:
+                                rowHeaders.append(var)
+                            for data in baselineData:
+                                trialData.append(data)
+            w.writerow(rowHeaders)
+            w.writerow(trialData)
+    else:
+        with open(directory + '.csv', 'a', newline='') as f:
+            w = csv.writer(f, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            #TODO: check to make sure these are confirmed
+            print(res_var.get())
+            resolution = res_var.get()
+            res1 = str(resolution[1:resolution.find(',')])
+            res2 = str(resolution[resolution.find(',')+2:len(resolution)-1])
+            newres = res1 + 'x' + res2
+            rowHeaders = ['FileName', 'Brightness', 'Sharpness', 'Resolution', 'Framerate', 'Start Time', 'End Time', 'Pi Number', 'Experiment Type', 'Post-Operation Type', 'Post-Op Info']
+            trialData = [filename_var.get(), slider_brightness.get(), slider_sharpness.get(), newres, frame_var.get(), starttimeVar.get(), endtimeVar.get()]
+            # as an example, i created a boolean flag variable that is true when the pi button is confirmed. 
+            # not sure if there is a better way to do this 
+            if pinumvar.get() == "On":
+                trialData.append(raspinum.get())
+
+            #recording type variables: i used label['text'] to retrieve text from labels and .get() to retrieve text from entry boxes
+            postOpVars = []
+            postOpData = []
+            baselineVars = []
+            baselineData = []
+            if rec_var.get() == "On":
+                trialData.append(rec.get())
+                if rec.get() == "Post-Operation":
+                    trialData.append(types.get())
+                    for i in range(1, len(dynamic_widgets)):
+                        if i % 2 != 0:
+                            postOpVars.append(dynamic_widgets[i]['text'])
+                            postOpData.append(dynamic_widgets[i+1].get())
+                    for var in postOpVars:
+                        rowHeaders.append(var)
+                    for data in postOpData:
+                        trialData.append(data)
+                elif rec.get() == 'Baseline' or rec.get() == 'Test':
+                    for i in range(len(dynamic_widgets)):
+                        if i%2 == 0:
+                            baselineVars.append(dynamic_widgets[i]['text'])
+                            baselineData.append(dynamic_widgets[i+1].get())
+                            for var in baselineVars:
+                                rowHeaders.append(var)
+                            for data in baselineData:
+                                trialData.append(data)
+            w.writerow(trialData)
 
 
-        # as an example, i created a boolean flag variable that is true when the pi button is confirmed. 
-        # not sure if there is a better way to do this 
-        if pinumvar.get() == "On":
-             w.writerow(['PiNumber', raspinum.get()])
+        
+# csv_button = Button(root,height=2, width=30, text="Create CSV", font=font_bold, padx=-5, pady=-5, bg = "pink", command=set_csv_Flag)
+# csv_button.place(x=550, y=640)
+# csv_label = Label(root, text="Make sure all necessary fields are entered before creating csv.", font=csv_label_font)
+# csv_label.place(x=500, y=700)
 
-        #recording type variables: i used label['text'] to retrieve text from labels and .get() to retrieve text from entry boxes
-        if rec_var.get() == "On":
-            w.writerow(['Experiment Type', rec.get()])
-            if rec.get() == "Post-Operation":
-                w.writerow(['Post-Operation Type', types.get()])
-                for i in range(1, len(dynamic_widgets)):
-                    if i % 2 != 0:
-                        w.writerow([dynamic_widgets[i]['text'],dynamic_widgets[i+1].get()])
-            elif rec.get() == 'Baseline' or rec.get() == 'Test':
-                for i in range(len(dynamic_widgets)):
-                    if i%2 == 0:
-                        w.writerow([dynamic_widgets[i]['text'], dynamic_widgets[i+1].get()])
-
-csv_button = Button(root,height=2, width=30, text="Create CSV", font=font_bold, padx=-5, pady=-5, bg = "pink", command=create_csv)
-csv_button.place(x=550, y=640)
-csv_label = Label(root, text="Make sure all necessary fields are entered before creating csv.", font=csv_label_font)
-csv_label.place(x=500, y=700)
+CSVflagVar = StringVar()
+includeincsv_checkbox = Checkbutton(root, text='Include in CSV',font = font_bold, variable = CSVflagVar, onvalue="On", offvalue="Off")
+includeincsv_checkbox.deselect()
+includeincsv_checkbox.place(x=550,y=640)
 
  
 # Place Widgets
@@ -519,7 +617,7 @@ button_file_explorer.place(x = 50, y= 150)
 label_duration.place(x=20, y=265)
 entry_duration.place(x=295, y=265)
 button_confirm_duration.place(x=40, y=290)
-label_confirm_duration.place(x=130,y=295)
+label_confirm_duration.place(x=130,y=295) 
 
 #resolution place
 label_resolution.place(x= 460, y= 40)
@@ -533,7 +631,13 @@ button_confirm_framerate.place(x=750, y=100)
 
 
 root.title("PainFace Data Collection App")
-root.geometry("1000x800")
+root.geometry("1000x720")
 root.resizable(width = False, height = False)
 
+def on_closing():
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        camera.close()
+        root.destroy()
+
+root.protocol("WM_DELETE_WINDOW", on_closing)
 root.mainloop()
